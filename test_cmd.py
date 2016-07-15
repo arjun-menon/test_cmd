@@ -260,7 +260,7 @@ def validate_cmdline_args(tests_dir, cmd):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='Light-weight Python templating engine.')
+    parser = argparse.ArgumentParser(description='Functional Testing Utility for Command-Line Applications')
     parser.add_argument('tests_dir', type=str, help='Path to the directory containing test cases')
     parser.add_argument('cmd', type=str, help='Path to the command to be tested')
     parser.add_argument('args', type=str, help="The command-line arguments with an ampersand character '@' marking" +

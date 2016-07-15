@@ -20,7 +20,7 @@ Usage
 
     usage: test_cmd.py [-h] tests_dir cmd ...
 
-    Light-weight Python templating engine.
+    Functional Testing Utility for Command-Line Applications
 
     positional arguments:
       tests_dir   Path to the directory containing test cases
