@@ -101,7 +101,7 @@ class TestCase(object):
         return content
 
     def run_cmd(self, cmd, input_text):
-        print(color("Running:", Color.BOLD), ' '.join(cmd))
+        print(color('Running:', Color.BOLD), ' '.join(cmd))
         process = Popen(self.cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate(input=input_text)
         return stdout, stderr
@@ -118,12 +118,12 @@ class TestCase(object):
             if expected_stdout == stdout:
                 stdout_match = True
             else:
-                print(color("Received STDOUT:", Color.YELLOW))
+                print(color('Received STDOUT:', Color.YELLOW))
                 print(stdout)
-                print(color("Expected STDOUT:", Color.YELLOW))
+                print(color('Expected STDOUT:', Color.YELLOW))
                 print(expected_stdout)
         elif len(stdout) > 0:
-            print(color("Received STDOUT:", Color.YELLOW))
+            print(color('Received STDOUT:', Color.YELLOW))
             print(stdout)
             print(color('Missing STDOUT file: %s' % self.stdout_file, Color.YELLOW))
         else:
@@ -134,12 +134,12 @@ class TestCase(object):
             if expected_stderr == stderr:
                 stderr_match = True
             else:
-                print(color("Received STDERR:", Color.YELLOW))
+                print(color('Received STDERR:', Color.YELLOW))
                 print(stderr)
-                print(color("Expected STDERR:", Color.YELLOW))
+                print(color('Expected STDERR:', Color.YELLOW))
                 print(expected_stderr)
         elif len(stderr) > 0:
-            print(color("Received STDERR:", Color.YELLOW))
+            print(color('Received STDERR:', Color.YELLOW))
             print(stderr)
             print(color('Missing STDERR file: %s' % self.stderr_file, Color.YELLOW))
         else:
@@ -201,7 +201,7 @@ def replace_at_sign_with_cmdline_args(case, cmdline_args):
     case.cmd = updated_cmd
 
 def set_cmdline_args_from_tests_json(tests_dir, test_cases):
-    tests_json_file = path.join(tests_dir, "tests.json")
+    tests_json_file = path.join(tests_dir, 'tests.json')
     with open(tests_json_file) as f:
         tests_json = loads(f.read(), object_hook=_decode_dict)
 
@@ -251,24 +251,24 @@ def color(text, color):
 def test_cmd(cmd, tests_dir):
     test_cases = get_test_cases(cmd, tests_dir)
 
-    print("Running %i tests...\n" % len(test_cases))
+    print('Running %i tests...\n' % len(test_cases))
 
     total, passed = len(test_cases),  0
     for name, case in test_cases.items():
         print(color(name, Color.UNDERLINE))
 
         if case.test():
-            print(color("Success", Color.GREEN))
+            print(color('Success', Color.GREEN))
             passed += 1
         else:
-            print(color("Failure", Color.RED))
+            print(color('Failure', Color.RED))
         print()
 
     if passed == total:
-        print(color("All %d tests passed." % total, Color.BLUE))
+        print(color('All %d tests passed.' % total, Color.BLUE))
         return True
     else:
-        print(color("%d tests passed, %d tests failed." % (passed, total - passed), Color.BLUE))
+        print(color('%d tests passed, %d tests failed.' % (passed, total - passed), Color.BLUE))
         return False
 
 def validate_cmdline_args(args):
@@ -290,10 +290,10 @@ def validate_cmdline_args(args):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Light-weight Python templating engine.")
+    parser = argparse.ArgumentParser(description='Light-weight Python templating engine.')
     parser.add_argument('tests_dir', type=str, help='The directory containing test cases')
-    parser.add_argument('cmd', type=str, help='The command to test with any and all command-line\
-arguments, and with an @ denoting where args from test.json should be injected', nargs=argparse.REMAINDER)
+    parser.add_argument('cmd', type=str, help='The command to test with any and all command-line arguments, ' + 
+        'and with an @ denoting where args from test.json should be injected', nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     validate_cmdline_args(args)
