@@ -217,7 +217,7 @@ class Color(object):
 def color(text, color):
     return '%s%s%s' % (color, text, Color.END)
 
-def test_cmd(cmd, tests_dir):
+def test_cmd(tests_dir, cmd):
     test_cases = get_test_cases(cmd, tests_dir)
 
     print('Running %i tests...\n' % len(test_cases))
@@ -240,36 +240,41 @@ def test_cmd(cmd, tests_dir):
         print(color('%d tests passed, %d tests failed.' % (passed, total - passed), Color.BLUE))
         return False
 
-def validate_cmdline_args(args):
-    if not path.isdir(args.tests_dir):
-        print("The directory '%s' does not exist." % args.cmd)
-        exit(1)
+class TestCmdException(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
 
-    if not path.isfile(args.cmd[0]):
-        print("The command '%s' does not exist." % args.cmd)
-        exit(1)
+def validate_cmdline_args(tests_dir, cmd):
+    if not path.isdir(tests_dir):
+        raise TestCmdException("The directory '%s' does not exist." % cmd)
+
+    if not path.isfile(cmd[0]):
+        raise TestCmdException("The command '%s' does not exist." % cmd)
 
     at_sign_seen = False
-    for cmd_segment in args.cmd:
+    for cmd_segment in cmd:
         if cmd_segment == '@':
             if at_sign_seen:
-                print("Only one '@' command-line args substituion marker allowed.")
-                exit(1)
+                raise TestCmdException("Only one '@' command-line args substituion marker allowed.")
             at_sign_seen = True
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Light-weight Python templating engine.')
-    parser.add_argument('tests_dir', type=str, help='The directory containing test cases')
-    parser.add_argument('cmd', type=str, help='The command to test with any and all command-line arguments, ' + 
-        'and with an @ denoting where args from test.json should be injected', nargs=argparse.REMAINDER)
+    parser.add_argument('tests_dir', type=str, help='Path to the directory containing test cases')
+    parser.add_argument('cmd', type=str, help='Path to the command to be tested')
+    parser.add_argument('args', type=str, help="The command-line arguments with an ampersand character '@' marking" +
+        "where arguments from test.json should be injected", nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    tests_dir = args.tests_dir
+    cmd = [args.cmd]
+    cmd.extend(args.args)
 
-    validate_cmdline_args(args)
-
-    if test_cmd(args.cmd, args.tests_dir):
-        exit(0)
-    else:
+    try:
+        validate_cmdline_args(tests_dir, cmd)
+        test_cmd(tests_dir, cmd)
+    except TestCmdException as ex:
+        print(color('test-cmd error: ', Color.RED), ex.message)
         exit(1)
 
 if __name__ == '__main__':
