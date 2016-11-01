@@ -1,9 +1,9 @@
-test-cmd
+test_cmd
 ========
-This is a utility for `functional testing <https://en.wikipedia.org/wiki/Functional_testing>`_ command-line applications.
+This is a tool for black-box testing command-line programs simply based on STDIN, STDOUT, and STDERR.
 
-Manual
-------
+Tutorial
+--------
 Test cases usually consist of pairs of input and output files, as well as an optional ``tests.json`` file specifying applicable command-line arguments.  The input file is piped in via ``STDIN``. If the command being tested emits the expected output file via ``STDOUT``, the test case passes. A file representing an expected ``STDERR`` output can also optionally be specified.
 
 The input/output file pairs must follow this naming pattern::
@@ -31,4 +31,4 @@ Usage
     optional arguments:
       -h, --help  show this help message and exit
 
-Command-line arguments for test cases can be specified by creating a special file named 'tests.json', and placing it in the directory containing your test cases. This ``tests.json`` file maps test cases to objects representing command-line arguments for that test case. If a command-line argument is a non-string value (e.g. a complex JavaScript object), the argument is stringified (with Python's ``json.dumps``), and passed in as JSON.
+Command-line arguments for test cases can be specified by creating a special file named ``tests.json``, and placing it in the directory containing your test cases. This ``tests.json`` file maps test cases to objects representing command-line arguments for that test case. If a command-line argument is a non-string value (e.g. a complex JavaScript object), the argument is stringified (with Python's ``json.dumps``), and passed in as JSON.
