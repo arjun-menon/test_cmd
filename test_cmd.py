@@ -272,10 +272,10 @@ def main():
 
     try:
         validate_cmdline_args(tests_dir, cmd)
-        test_cmd(tests_dir, cmd)
+        exit(0 if test_cmd(tests_dir, cmd) else 1)
     except TestCmdException as ex:
         print(color('test-cmd error: ', Color.RED), ex.message)
-        exit(1)
+        exit(2)
 
 if __name__ == '__main__':
     main()
