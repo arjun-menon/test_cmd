@@ -14,6 +14,8 @@ The input/output file pairs must follow this naming pattern::
 
 The file extension (``.txt`` here) can be anything. The file naming pattern is ``*.in*`` for input files, ``*.out*`` for expected output files, and ``*.err*`` for expected error files. The content of the ``*.in.*`` file is piped to the command being tested, and its ``STDOUT`` is compared against the ``*.out*`` file. If a ``*.err.*`` file has been provided, then the command ``STDERR`` is matched against it as well.
 
+For an example of test_cmd in action, see the `pypage project <https://github.com/arjun-menon/pypage>`_, particularly its `tests folder <https://github.com/arjun-menon/pypage/tree/master/tests>`_.
+
 Usage
 *****
 ::
