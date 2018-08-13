@@ -1,5 +1,5 @@
-test_cmd
-========
+test_cmd |pypi|
+===============
 This is a tool for black-box testing command-line programs simply based on STDIN, STDOUT, and STDERR.
 
 Tutorial
@@ -34,3 +34,6 @@ Usage
       -h, --help  show this help message and exit
 
 Command-line arguments for test cases can be specified by creating a special file named ``tests.json``, and placing it in the directory containing your test cases. This ``tests.json`` file maps test cases to objects representing command-line arguments for that test case. If a command-line argument is a non-string value (e.g. a complex JavaScript object), the argument is stringified (with Python's ``json.dumps``), and passed in as JSON.
+
+.. |pypi| image:: https://badge.fury.io/py/test_cmd.svg
+   :target: https://pypi.python.org/pypi/test_cmd
