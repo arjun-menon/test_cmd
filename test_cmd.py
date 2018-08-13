@@ -36,6 +36,7 @@ class TestCase(Thread):
         self.name = name
         self.cmd = cmd
         self.tests_dir = tests_dir
+        self.success = False
         self.details = ''
 
         self.input_file = path.join(tests_dir, input_file_name)
@@ -105,12 +106,12 @@ class TestCase(Thread):
                 stdout_match = True
             else:
                 self.detail(color('Received STDOUT:', Color.YELLOW))
-                self.detail(stdout)
+                self.detail(stdout.decode())
                 self.detail(color('Expected STDOUT:', Color.YELLOW))
-                self.detail(expected_stdout)
+                self.detail(expected_stdout.decode())
         elif len(stdout) > 0:
             self.detail(color('Received STDOUT:', Color.YELLOW))
-            self.detail(stdout)
+            self.detail(stdout.decode())
             self.detail(color('Missing STDOUT file: %s' % self.stdout_file, Color.YELLOW))
         else:
             stdout_match = True
@@ -121,12 +122,12 @@ class TestCase(Thread):
                 stderr_match = True
             else:
                 self.detail(color('Received STDERR:', Color.YELLOW))
-                self.detail(stderr)
+                self.detail(stderr.decode())
                 self.detail(color('Expected STDERR:', Color.YELLOW))
-                self.detail(expected_stderr)
+                self.detail(expected_stderr.decode())
         elif len(stderr) > 0:
             self.detail(color('Received STDERR:', Color.YELLOW))
-            self.detail(stderr)
+            self.detail(stderr.decode())
             self.detail(color('Missing STDERR file: %s' % self.stderr_file, Color.YELLOW))
         else:
             stderr_match = True
