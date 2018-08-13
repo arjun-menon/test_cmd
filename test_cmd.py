@@ -23,13 +23,21 @@ from collections import OrderedDict
 from subprocess import Popen, PIPE, STDOUT
 from sys import exit, version_info
 from os import path, listdir
+from multiprocessing import cpu_count
+from threading import Thread, Semaphore
 
-class TestCase(object):
+max_parallel = Semaphore(cpu_count())
+
+class TestCase(Thread):
     def __init__(self, cmd, tests_dir, input_file_name):
+        name = self.construct_test_name(input_file_name)
+        Thread.__init__(self, name=name)
+
+        self.name = name
         self.cmd = cmd
         self.tests_dir = tests_dir
+        self.details = ''
 
-        self.name = self.construct_test_name(input_file_name)
         self.input_file = path.join(tests_dir, input_file_name)
         self.stdout_file = path.join(tests_dir, self.construct_stdout_file_name(input_file_name))
         self.stderr_file = path.join(tests_dir, self.construct_stderr_file_name(input_file_name))
@@ -69,15 +77,24 @@ class TestCase(object):
             content = bytes(content, 'utf-8')
         return content
 
-    def run_cmd(self, cmd, input_text):
-        print(color('Running:', Color.BOLD), ' '.join(cmd))
+    def run_cmd(self, input_text):
+        global max_parallel
+        max_parallel.acquire()
+
         process = Popen(self.cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate(input=input_text)
+
+        max_parallel.release()
         return stdout, stderr
 
-    def test(self):
+    def detail(self, s=''):
+        self.details += s + '\n'
+
+    def run(self):
+        self.detail(color(self.name, Color.UNDERLINE))
         test_input = self.read_file(self.input_file)
-        stdout, stderr = self.run_cmd(self.cmd, test_input)
+        self.detail(color('Command:', Color.BOLD) + ' ' + ' '.join(self.cmd))
+        stdout, stderr = self.run_cmd(test_input)
 
         stdout_match = False
         stderr_match = False
@@ -87,14 +104,14 @@ class TestCase(object):
             if expected_stdout == stdout:
                 stdout_match = True
             else:
-                print(color('Received STDOUT:', Color.YELLOW))
-                print(stdout)
-                print(color('Expected STDOUT:', Color.YELLOW))
-                print(expected_stdout)
+                self.detail(color('Received STDOUT:', Color.YELLOW))
+                self.detail(stdout)
+                self.detail(color('Expected STDOUT:', Color.YELLOW))
+                self.detail(expected_stdout)
         elif len(stdout) > 0:
-            print(color('Received STDOUT:', Color.YELLOW))
-            print(stdout)
-            print(color('Missing STDOUT file: %s' % self.stdout_file, Color.YELLOW))
+            self.detail(color('Received STDOUT:', Color.YELLOW))
+            self.detail(stdout)
+            self.detail(color('Missing STDOUT file: %s' % self.stdout_file, Color.YELLOW))
         else:
             stdout_match = True
 
@@ -103,18 +120,23 @@ class TestCase(object):
             if expected_stderr == stderr:
                 stderr_match = True
             else:
-                print(color('Received STDERR:', Color.YELLOW))
-                print(stderr)
-                print(color('Expected STDERR:', Color.YELLOW))
-                print(expected_stderr)
+                self.detail(color('Received STDERR:', Color.YELLOW))
+                self.detail(stderr)
+                self.detail(color('Expected STDERR:', Color.YELLOW))
+                self.detail(expected_stderr)
         elif len(stderr) > 0:
-            print(color('Received STDERR:', Color.YELLOW))
-            print(stderr)
-            print(color('Missing STDERR file: %s' % self.stderr_file, Color.YELLOW))
+            self.detail(color('Received STDERR:', Color.YELLOW))
+            self.detail(stderr)
+            self.detail(color('Missing STDERR file: %s' % self.stderr_file, Color.YELLOW))
         else:
             stderr_match = True
 
-        return stdout_match and stderr_match
+        self.success = stdout_match and stderr_match
+
+        if self.success:
+            self.detail(color('Success', Color.GREEN))
+        else:
+            self.detail(color('Failure', Color.RED))
 
 
 def _decode_list(data): # http://stackoverflow.com/a/6633651/908430
@@ -191,7 +213,7 @@ def clear_at_sign_from_cmd(test_cases):
 
 def get_test_cases(cmd, tests_dir):
     file_list = listdir(tests_dir)
-    file_names = filter(lambda name: is_input_file(name), file_list)
+    file_names = sorted(filter(lambda name: is_input_file(name), file_list))
 
     test_cases = OrderedDict()
 
@@ -220,18 +242,16 @@ def color(text, color):
 def test_cmd(tests_dir, cmd):
     test_cases = get_test_cases(cmd, tests_dir)
 
-    print('Running %i tests...\n' % len(test_cases))
+    print('Running %i tests on %i CPUs...\n' % (len(test_cases), cpu_count()))
 
-    total, passed = len(test_cases),  0
-    for name, case in test_cases.items():
-        print(color(name, Color.UNDERLINE))
+    for case in test_cases.values():
+        case.start()
 
-        if case.test():
-            print(color('Success', Color.GREEN))
-            passed += 1
-        else:
-            print(color('Failure', Color.RED))
-        print()
+    total, passed = len(test_cases), 0
+    for case in test_cases.values():
+        case.join()
+        print(case.details)
+        passed += 1 if case.success else 0
 
     if passed == total:
         print(color('All %d tests passed.' % total, Color.BLUE))
