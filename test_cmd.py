@@ -80,13 +80,20 @@ class TestCase(Thread):
 
     def run_cmd(self, input_text):
         global max_parallel
+        stdout = None
+        stderr = None
+        process = None
+
         max_parallel.acquire()
+        try:
 
-        process = Popen(self.cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
-        stdout, stderr = process.communicate(input=input_text)
+            process = Popen(self.cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+            stdout, stderr = process.communicate(input=input_text)
+        finally:
+            max_parallel.release()
 
-        max_parallel.release()
-        return stdout, stderr
+        return stdout, stderr, process
+
 
     def detail(self, s=''):
         self.details += s + '\n'
@@ -95,7 +102,7 @@ class TestCase(Thread):
         self.detail(color(self.name, Color.UNDERLINE))
         test_input = self.read_file(self.input_file)
         self.detail(color('Command:', Color.BOLD) + ' ' + ' '.join(self.cmd))
-        stdout, stderr = self.run_cmd(test_input)
+        stdout, stderr, process = self.run_cmd(test_input)
 
         stdout_match = False
         stderr_match = False
