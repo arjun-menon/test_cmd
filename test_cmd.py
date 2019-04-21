@@ -18,15 +18,21 @@
 #
 
 from __future__ import print_function
+import os
+import sys
 from json import dumps, loads
 from collections import OrderedDict
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 from sys import exit, version_info
 from os import path, listdir
 from multiprocessing import cpu_count
 from threading import Thread, Semaphore
 
 max_parallel = Semaphore(cpu_count())
+
+# Black & White
+bw = False
+
 
 class TestCase(Thread):
     def __init__(self, cmd, tests_dir, input_file_name):
@@ -80,13 +86,20 @@ class TestCase(Thread):
 
     def run_cmd(self, input_text):
         global max_parallel
+        stdout = None
+        stderr = None
+        process = None
+
         max_parallel.acquire()
+        try:
 
-        process = Popen(self.cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
-        stdout, stderr = process.communicate(input=input_text)
+            process = Popen(self.cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+            stdout, stderr = process.communicate(input=input_text)
+        finally:
+            max_parallel.release()
 
-        max_parallel.release()
-        return stdout, stderr
+        return stdout, stderr, process
+
 
     def detail(self, s=''):
         self.details += s + '\n'
@@ -95,7 +108,7 @@ class TestCase(Thread):
         self.detail(color(self.name, Color.UNDERLINE))
         test_input = self.read_file(self.input_file)
         self.detail(color('Command:', Color.BOLD) + ' ' + ' '.join(self.cmd))
-        stdout, stderr = self.run_cmd(test_input)
+        stdout, stderr, process = self.run_cmd(test_input)
 
         stdout_match = False
         stderr_match = False
@@ -238,7 +251,10 @@ class Color(object):
     UNDERLINE = '\033[4m'
 
 def color(text, color):
-    return '%s%s%s' % (color, text, Color.END)
+    if bw:
+        return text
+    else:
+        return '%s%s%s' % (color, text, Color.END)
 
 def test_cmd(tests_dir, cmd):
     test_cases = get_test_cases(cmd, tests_dir)
@@ -280,8 +296,10 @@ def validate_cmdline_args(tests_dir, cmd):
             at_sign_seen = True
 
 def main():
+    global bw
     import argparse
     parser = argparse.ArgumentParser(description='Functional Testing Utility for Command-Line Applications')
+    parser.add_argument('-b', '--bw', dest='bw', action='store_true', default=False, help='black & white output')
     parser.add_argument('tests_dir', type=str, help='Path to the directory containing test cases')
     parser.add_argument('cmd', type=str, help='Path to the command to be tested')
     parser.add_argument('args', type=str, help="The command-line arguments with an ampersand character '@' marking" +
@@ -290,6 +308,12 @@ def main():
     tests_dir = args.tests_dir
     cmd = [args.cmd]
     cmd.extend(args.args)
+
+    bw = args.bw
+
+    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    if not bw and not is_a_tty:
+        bw = False
 
     try:
         validate_cmdline_args(tests_dir, cmd)
