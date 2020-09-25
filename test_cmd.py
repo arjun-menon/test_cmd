@@ -35,7 +35,7 @@ bw = False
 
 
 class TestCase(Thread):
-    def __init__(self, cmd, tests_dir, input_file_name):
+    def __init__(self, cmd, tests_dir, input_file_name, **kwargs):
         name = self.construct_test_name(input_file_name)
         Thread.__init__(self, name=name)
 
@@ -48,6 +48,8 @@ class TestCase(Thread):
         self.input_file = path.join(tests_dir, input_file_name)
         self.stdout_file = path.join(tests_dir, self.construct_stdout_file_name(input_file_name))
         self.stderr_file = path.join(tests_dir, self.construct_stderr_file_name(input_file_name))
+
+        self.kwargs = kwargs
 
     @staticmethod
     def construct_test_name(input_file_name):
@@ -84,6 +86,13 @@ class TestCase(Thread):
             content = bytes(content, 'utf-8')
         return content
 
+    def convert_output(self, text):
+        if self.kwargs.get("to_unix", False):
+            text = text.replace(b"\r\n", b"\n")
+        if self.kwargs.get("rtrim", False):
+            text = b"\n".join([line.rstrip(b" ") for line in text.split(b"\n")]).rstrip(b"\n")
+        return text
+
     def run_cmd(self, input_text):
         global max_parallel
         stdout = None
@@ -109,12 +118,14 @@ class TestCase(Thread):
         test_input = self.read_file(self.input_file)
         self.detail(color('Command:', Color.BOLD) + ' ' + ' '.join(self.cmd))
         stdout, stderr, process = self.run_cmd(test_input)
+        stdout = self.convert_output(stdout)
+        stderr = self.convert_output(stderr)
 
         stdout_match = False
         stderr_match = False
 
         if path.isfile(self.stdout_file):
-            expected_stdout = self.read_file(self.stdout_file)
+            expected_stdout = self.convert_output(self.read_file(self.stdout_file))
             if expected_stdout == stdout:
                 stdout_match = True
             else:
@@ -130,7 +141,7 @@ class TestCase(Thread):
             stdout_match = True
 
         if path.isfile(self.stderr_file):
-            expected_stderr = self.read_file(self.stderr_file)
+            expected_stderr = self.convert_output(self.read_file(self.stderr_file))
             if expected_stderr == stderr:
                 stderr_match = True
             else:
@@ -225,14 +236,14 @@ def clear_at_sign_from_cmd(test_cases):
         except ValueError:
             pass
 
-def get_test_cases(cmd, tests_dir):
+def get_test_cases(cmd, tests_dir, **kwargs):
     file_list = listdir(tests_dir)
     file_names = sorted(filter(lambda name: is_input_file(name), file_list))
 
     test_cases = OrderedDict()
 
     for file_name in file_names:
-        test_case = TestCase(cmd, tests_dir, file_name)
+        test_case = TestCase(cmd, tests_dir, file_name, **kwargs)
         test_cases[test_case.name] = test_case
 
     set_cmdline_args_from_tests_json(tests_dir, test_cases)
@@ -256,8 +267,8 @@ def color(text, color):
     else:
         return '%s%s%s' % (color, text, Color.END)
 
-def test_cmd(tests_dir, cmd):
-    test_cases = get_test_cases(cmd, tests_dir)
+def test_cmd(tests_dir, cmd, **kwargs):
+    test_cases = get_test_cases(cmd, tests_dir, **kwargs)
 
     print('Running %i tests on %i CPUs...\n' % (len(test_cases), cpu_count()))
 
@@ -304,12 +315,20 @@ def main():
     parser.add_argument('cmd', type=str, help='Path to the command to be tested')
     parser.add_argument('args', type=str, help="The command-line arguments with an ampersand character '@' marking" +
         "where arguments from test.json should be injected", nargs=argparse.REMAINDER)
+    parser.add_argument('-u', '--to-unix', action='store_true', default=False,
+        help='convert CR+LF to LF in cmd output and test files')
+    parser.add_argument('-t', '--rtrim', action='store_true', default=False,
+        help='ignore trailing whitespaces at the end of each line as well as trailing newlines')
     args = parser.parse_args()
     tests_dir = args.tests_dir
     cmd = [args.cmd]
     cmd.extend(args.args)
 
     bw = args.bw
+    kwargs = {
+        "to_unix": args.to_unix,
+        "rtrim": args.rtrim,
+    }
 
     is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
     if not bw and not is_a_tty:
@@ -317,7 +336,7 @@ def main():
 
     try:
         validate_cmdline_args(tests_dir, cmd)
-        exit(0 if test_cmd(tests_dir, cmd) else 1)
+        exit(0 if test_cmd(tests_dir, cmd, **kwargs) else 1)
     except TestCmdException as ex:
         print(color('test-cmd error: ', Color.RED), ex.message)
         exit(2)
