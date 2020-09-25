@@ -25,10 +25,9 @@ from sys import stdout, exit, version_info
 from os import path, listdir
 from multiprocessing import cpu_count
 from threading import Thread, Semaphore
-from difflib import unified_diff
+from difflib import unified_diff, diff_bytes
 
 max_parallel = Semaphore(cpu_count())
-diff_mode = False
 
 # Black & White
 bw = False
@@ -129,11 +128,10 @@ class TestCase(Thread):
             if expected_stdout == stdout:
                 stdout_match = True
             else:
-                if diff_mode:
+                if self.kwargs.get("diff_mode", False):
                     self.detail(color('STDOUT:', Color.YELLOW))
-                    for line in unified_diff(expected_stdout.splitlines(),
-                            stdout.decode().splitlines(), 
-                            fromfile='Expected STDOUT', tofile='Received STDOUT'):
+                    for line in diff_bytes(unified_diff, expected_stdout.split(b'\n'), stdout.split(b'\n'),
+                            fromfile=b'Expected STDOUT', tofile=b'Received STDOUT'):
                         print(line)
                 else:
                     self.detail(color('Received STDOUT:', Color.YELLOW))
@@ -152,11 +150,10 @@ class TestCase(Thread):
             if expected_stderr == stderr:
                 stderr_match = True
             else:
-                if diff_mode:
+                if self.kwargs.get("diff_mode", False):
                     self.detail(color('STDERR:', Color.YELLOW))
-                    for line in unified_diff(expected_stderr.splitlines(),
-                            stderr.decode().splitlines(), 
-                            fromfile='Expected STDERR', tofile='Received STDERR'):
+                    for line in diff_bytes(unified_diff, expected_stderr.split(b'\n'), stderr.split(b'\n'),
+                            fromfile=b'Expected STDERR', tofile=b'Received STDERR'):
                         print(line)
                 else:
                     self.detail(color('Received STDERR:', Color.YELLOW))
@@ -321,7 +318,7 @@ def validate_cmdline_args(tests_dir, cmd):
             at_sign_seen = True
 
 def main():
-    global bw, diff_mode
+    global bw
     import argparse
     parser = argparse.ArgumentParser(description='Functional Testing Utility for Command-Line Applications')
     parser.add_argument('-b', '--bw', dest='bw', action='store_true', default=False, help='black & white output')
@@ -344,6 +341,7 @@ def main():
     kwargs = {
         "to_unix": args.to_unix,
         "rtrim": args.rtrim,
+        "diff_mode": args.diff_mode,
     }
 
     is_a_tty = hasattr(stdout, 'isatty') and stdout.isatty()
