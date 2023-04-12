@@ -25,13 +25,15 @@ Usage
     Functional Testing Utility for Command-Line Applications
 
     positional arguments:
-      tests_dir   Path to the directory containing test cases
-      cmd         Path to the command to be tested
-      args        The command-line arguments with an ampersand character '@'
-                  markingwhere arguments from test.json should be injected
+      tests_dir      Path to the directory containing test cases
+      cmd            Path to the command to be tested
+      args           The command-line arguments with an ampersand character '@' markingwhere arguments from test.json should be injected
 
     optional arguments:
-      -h, --help  show this help message and exit
+      -h, --help     show this help message and exit
+      -b, --bw       black & white output
+      -u, --to-unix  convert CR+LF to LF in cmd output and test files
+      -t, --rtrim    ignore trailing whitespaces at the end of each line as well as trailing newlines
 
 Command-line arguments for test cases can be specified by creating a special file named ``tests.json``, and placing it in the directory containing your test cases. This ``tests.json`` file maps test cases to objects representing command-line arguments for that test case. If a command-line argument is a non-string value (e.g. a complex JavaScript object), the argument is stringified (with Python's ``json.dumps``), and passed in as JSON.
 
