@@ -27,8 +27,10 @@ from sys import exit, version_info
 from os import path, listdir
 from multiprocessing import cpu_count
 from threading import Thread, Semaphore
+from difflib import unified_diff
 
 max_parallel = Semaphore(cpu_count())
+diff_mode = False
 
 # Black & White
 bw = False
@@ -129,10 +131,17 @@ class TestCase(Thread):
             if expected_stdout == stdout:
                 stdout_match = True
             else:
-                self.detail(color('Received STDOUT:', Color.YELLOW))
-                self.detail(stdout.decode())
-                self.detail(color('Expected STDOUT:', Color.YELLOW))
-                self.detail(expected_stdout.decode())
+                if diff_mode:
+                    self.detail(color('STDOUT:', Color.YELLOW))
+                    for line in unified_diff(expected_stdout.splitlines(),
+                            stdout.decode().splitlines(), 
+                            fromfile='Expected STDOUT', tofile='Received STDOUT'):
+                        print(line)
+                else:
+                    self.detail(color('Received STDOUT:', Color.YELLOW))
+                    self.detail(stdout.decode())
+                    self.detail(color('Expected STDOUT:', Color.YELLOW))
+                    self.detail(expected_stdout.decode())
         elif len(stdout) > 0:
             self.detail(color('Received STDOUT:', Color.YELLOW))
             self.detail(stdout.decode())
@@ -145,10 +154,17 @@ class TestCase(Thread):
             if expected_stderr == stderr:
                 stderr_match = True
             else:
-                self.detail(color('Received STDERR:', Color.YELLOW))
-                self.detail(stderr.decode())
-                self.detail(color('Expected STDERR:', Color.YELLOW))
-                self.detail(expected_stderr.decode())
+                if diff_mode:
+                    self.detail(color('STDERR:', Color.YELLOW))
+                    for line in unified_diff(expected_stderr.splitlines(),
+                            stderr.decode().splitlines(), 
+                            fromfile='Expected STDERR', tofile='Received STDERR'):
+                        print(line)
+                else:
+                    self.detail(color('Received STDERR:', Color.YELLOW))
+                    self.detail(stderr.decode())
+                    self.detail(color('Expected STDERR:', Color.YELLOW))
+                    self.detail(expected_stderr.decode())
         elif len(stderr) > 0:
             self.detail(color('Received STDERR:', Color.YELLOW))
             self.detail(stderr.decode())
@@ -307,10 +323,11 @@ def validate_cmdline_args(tests_dir, cmd):
             at_sign_seen = True
 
 def main():
-    global bw
+    global bw, diff_mode
     import argparse
     parser = argparse.ArgumentParser(description='Functional Testing Utility for Command-Line Applications')
     parser.add_argument('-b', '--bw', dest='bw', action='store_true', default=False, help='black & white output')
+    parser.add_argument('-d', '--diff', dest='diff_mode', action='store_true', default=False, help='diff output')
     parser.add_argument('tests_dir', type=str, help='Path to the directory containing test cases')
     parser.add_argument('cmd', type=str, help='Path to the command to be tested')
     parser.add_argument('args', type=str, help="The command-line arguments with an ampersand character '@' marking" +
@@ -325,6 +342,7 @@ def main():
     cmd.extend(args.args)
 
     bw = args.bw
+    diff_mode = args.diff_mode
     kwargs = {
         "to_unix": args.to_unix,
         "rtrim": args.rtrim,
