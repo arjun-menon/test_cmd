@@ -310,10 +310,10 @@ class TestCmdException(Exception):
 
 def validate_cmdline_args(tests_dir, cmd):
     if not path.isdir(tests_dir):
-        raise TestCmdException("The directory '%s' does not exist." % cmd)
+        raise TestCmdException("The directory '%s' does not exist." % tests_dir)
 
     if not path.isfile(cmd[0]):
-        raise TestCmdException("The command '%s' does not exist." % cmd)
+        raise TestCmdException("The command '%s' does not exist." % cmd[0])
 
     at_sign_seen = False
     for cmd_segment in cmd:
