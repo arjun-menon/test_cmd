@@ -18,12 +18,10 @@
 #
 
 from __future__ import print_function
-import os
-import sys
 from json import dumps, loads
 from collections import OrderedDict
 from subprocess import Popen, PIPE
-from sys import exit, version_info
+from sys import stdout, exit, version_info
 from os import path, listdir
 from multiprocessing import cpu_count
 from threading import Thread, Semaphore
@@ -348,7 +346,7 @@ def main():
         "rtrim": args.rtrim,
     }
 
-    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    is_a_tty = hasattr(stdout, 'isatty') and stdout.isatty()
     if not bw and not is_a_tty:
         bw = False
 
