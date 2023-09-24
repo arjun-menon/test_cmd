@@ -43,14 +43,14 @@ jobs:
 #        password: ${{ secrets.pypi_password }}
 
   publish-to-pypi:
-    name: Publish 📦 package to 🐍 PyPI
+    name: Publish 📦 package to 🐍 TestPyPI
     if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
     needs:
     - build
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/test_cmd
+      url: https://test.pypi.org/p/test_cmd
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
