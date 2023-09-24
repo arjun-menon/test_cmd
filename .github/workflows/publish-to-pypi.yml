@@ -80,6 +80,7 @@ jobs:
   github-release:
     name: >-
       GitHub 🚢 Release of 📦 package ✍️ signed by 🏛️ Sigstore
+    if: ${{ false }}  # disable for now
     needs:
     - publish-to-pypi
     runs-on: ubuntu-latest
