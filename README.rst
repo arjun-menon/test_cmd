@@ -20,7 +20,7 @@ Usage
 *****
 ::
 
-    usage: test_cmd.py [-h] tests_dir cmd ...
+    usage: test_cmd.py [-h] [-b] [-d] [-u] [-t] tests_dir cmd ...
 
     Functional Testing Utility for Command-Line Applications
 
@@ -29,9 +29,10 @@ Usage
       cmd            Path to the command to be tested
       args           The command-line arguments with an ampersand character '@' markingwhere arguments from test.json should be injected
 
-    optional arguments:
+    options:
       -h, --help     show this help message and exit
       -b, --bw       black & white output
+      -d, --diff     diff output
       -u, --to-unix  convert CR+LF to LF in cmd output and test files
       -t, --rtrim    ignore trailing whitespaces at the end of each line as well as trailing newlines
 
