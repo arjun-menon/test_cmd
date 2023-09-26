@@ -9,7 +9,7 @@ download_url = "%s/archive/v%s.tar.gz" % (repo_url, version)
 
 setup(name='test_cmd',
       version=version,
-      description='Tool for black-box testing command-line programs using STDIN, STDOUT and STDERR',
+      description='Tool for black-box testing command-line programs using STDIN, STDOUT and STDERR, with multiple CPUs',
       long_description=open('README.rst').read(),
       url=repo_url,
       download_url=download_url,
