@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-version = '2.0.4'
+version = '2.0.5'
 
 repo_url = 'https://github.com/arjun-menon/test_cmd'
 download_url = "%s/archive/v%s.tar.gz" % (repo_url, version)
