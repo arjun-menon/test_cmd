@@ -1,7 +1,7 @@
 test_cmd |pypi|
 ===============
 This is a tool for black-box testing command-line programs simply based on STDIN, STDOUT, and STDERR, **with multiple
-CPUs**. A sempahore keeps track of which CPUs are in use; and thus, tests are run in parallel on all CPUs, and new test
+CPUs**. A semaphore keeps track of which CPUs are in use; and thus, tests are run in parallel on all CPUs, and new test
 runs are dispatched as tests complete (or fail). ``test_cmd`` waits until all tests have completed (either successfully
 or failed), and prints failed tests' ``STDERR`` output, as they fail, in real time.
 
